@@ -1,0 +1,24 @@
+# Global gitignore
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+# Virtual environment
+venv/
+# Environment variables
+.env
+# Node
+node_modules/
+# Backend data (sqlite db, uploads etc.)
+backend/data/
+# Build artifacts
+frontend/dist/
+
+venv/
+node_modules/
+dist/
+.env
+__pycache__/
+backend/data/
