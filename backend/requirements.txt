@@ -1,9 +1,11 @@
-# Project dependencies
 fastapi
 uvicorn[standard]
-python-multipart
-pydantic==2.*
-python-dotenv
-# PDF, fuzzy matching, etc. (added later)
-# SQLite is in the stdlib
+pydantic>=2.0
+pydantic-settings
+pyyaml
+PyMuPDF
+reportlab
+pillow
+pytest
+httpx
 
