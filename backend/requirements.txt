@@ -8,4 +8,6 @@ reportlab
 pillow
 pytest
 httpx
+google-genai
+
 

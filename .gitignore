@@ -22,3 +22,29 @@ dist/
 .env
 __pycache__/
 backend/data/
+.aider*
+
+# Local secrets
+.env
+.env.*
+!.env.example
+backend/.env
+
+# Python environments and caches
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Node dependencies
+node_modules/
+
+# Local database
+*.db
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Aider cache
+.aider.tags.cache.v4/
+

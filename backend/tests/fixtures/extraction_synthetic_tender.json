@@ -1,0 +1,148 @@
+{
+  "tender_number": "SYN/2026/001",
+  "title": "Supply of Office Furniture to District Office",
+  "estimated_cost": 4000000.0,
+  "bid_deadline": "2026-11-30T15:00:00",
+  "requirements": [
+    {
+      "id": "req-emd",
+      "category": "EMD",
+      "description": "Earnest Money Deposit (EMD) of Rs. 2,00,000/-",
+      "is_mandatory": true,
+      "is_ambiguous": false,
+      "threshold_value": 200000.0,
+      "threshold_unit": "INR",
+      "turnover_basis": null,
+      "lookback_years": null,
+      "document_type_needed": null,
+      "exemptions": [
+        {
+          "applies_to": "MSME",
+          "effect": "WAIVED",
+          "relaxed_value": null,
+          "proof_document_type": "Udyam Registration",
+          "condition_text": "Micro and Small Enterprises registered under Udyam are exempted from payment of EMD, on submission of a valid Udyam registration certificate.",
+          "source_quote": "3.1 Micro and Small Enterprises registered under Udyam are exempted\nfrom the turnover requirement in clause 2.1 and from payment of EMD,\non submission of a valid Udyam registration certificate.",
+          "source_page": 3
+        }
+      ],
+      "source_quote": "Earnest Money Deposit (EMD): Rs. 2,00,000/-",
+      "source_page": 1,
+      "citation_status": null,
+      "citation_note": null
+    },
+    {
+      "id": "req-tender-fee",
+      "category": "TENDER_FEE",
+      "description": "Tender document fee of Rs. 1,000/-",
+      "is_mandatory": true,
+      "is_ambiguous": false,
+      "threshold_value": 1000.0,
+      "threshold_unit": "INR",
+      "turnover_basis": null,
+      "lookback_years": null,
+      "document_type_needed": null,
+      "exemptions": [],
+      "source_quote": "Tender document fee: Rs. 1,000/-",
+      "source_page": 1,
+      "citation_status": null,
+      "citation_note": null
+    },
+    {
+      "id": "req-turnover",
+      "category": "FINANCIAL_TURNOVER",
+      "description": "Average annual turnover of not less than Rs. 5 Crore during the last three financial years",
+      "is_mandatory": true,
+      "is_ambiguous": false,
+      "threshold_value": 50000000.0,
+      "threshold_unit": "INR",
+      "turnover_basis": "AVERAGE_3Y",
+      "lookback_years": 3,
+      "document_type_needed": "Audited Financial Statements",
+      "exemptions": [
+        {
+          "applies_to": "MSME",
+          "effect": "WAIVED",
+          "relaxed_value": null,
+          "proof_document_type": "Udyam Registration",
+          "condition_text": "Micro and Small Enterprises registered under Udyam are exempted from the turnover requirement in clause 2.1, on submission of a valid Udyam registration certificate.",
+          "source_quote": "3.1 Micro and Small Enterprises registered under Udyam are exempted\nfrom the turnover requirement in clause 2.1 and from payment of EMD,\non submission of a valid Udyam registration certificate.",
+          "source_page": 3
+        }
+      ],
+      "source_quote": "2.1 The bidder must have an average annual turnover of not less than\nRs. 5 Crore during the last three financial years.",
+      "source_page": 2,
+      "citation_status": null,
+      "citation_note": null
+    },
+    {
+      "id": "req-gst",
+      "category": "REGISTRATION",
+      "description": "Valid GST registration",
+      "is_mandatory": true,
+      "is_ambiguous": false,
+      "threshold_value": null,
+      "threshold_unit": null,
+      "turnover_basis": null,
+      "lookback_years": null,
+      "document_type_needed": "GST Registration",
+      "exemptions": [],
+      "source_quote": "2.2 The bidder must have a valid GST registration.",
+      "source_page": 2,
+      "citation_status": null,
+      "citation_note": null
+    },
+    {
+      "id": "req-iso-9001",
+      "category": "CERTIFICATE",
+      "description": "Valid ISO 9001 certification",
+      "is_mandatory": true,
+      "is_ambiguous": false,
+      "threshold_value": null,
+      "threshold_unit": null,
+      "turnover_basis": null,
+      "lookback_years": null,
+      "document_type_needed": "ISO 9001 Certificate",
+      "exemptions": [],
+      "source_quote": "2.3 The bidder must hold a valid ISO 9001 certification.",
+      "source_page": 2,
+      "citation_status": null,
+      "citation_note": null
+    },
+    {
+      "id": "req-experience",
+      "category": "EXPERIENCE",
+      "description": "Successfully completed at least one similar supply order of value not less than Rs. 20 lakh in the last five years",
+      "is_mandatory": true,
+      "is_ambiguous": false,
+      "threshold_value": 2000000.0,
+      "threshold_unit": "INR",
+      "turnover_basis": null,
+      "lookback_years": 5,
+      "document_type_needed": "Work Completion Certificate",
+      "exemptions": [],
+      "source_quote": "2.4 The bidder must have successfully completed at least one similar\nsupply order of value not less than Rs. 20 lakh in the last five years.",
+      "source_page": 3,
+      "citation_status": null,
+      "citation_note": null
+    },
+    {
+      "id": "req-performance-security",
+      "category": "PERFORMANCE_SECURITY",
+      "description": "Performance security of 5% of contract value",
+      "is_mandatory": true,
+      "is_ambiguous": false,
+      "threshold_value": 5.0,
+      "threshold_unit": "PERCENT",
+      "turnover_basis": null,
+      "lookback_years": null,
+      "document_type_needed": null,
+      "exemptions": [],
+      "source_quote": "4.1 The successful bidder shall furnish a performance security of\n5% of the contract value.",
+      "source_page": 4,
+      "citation_status": null,
+      "citation_note": null
+    }
+  ]
+}
+

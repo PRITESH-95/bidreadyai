@@ -38,3 +38,34 @@ async def health_check():
     alive. No authentication is needed.
     """
     return {"status": "ok", "app": "BidReady AI"}
+
+
+# ---- Upload endpoint: PDF in, extracted requirements out ----
+import os
+import tempfile
+from pathlib import Path
+
+from fastapi import File, HTTPException, UploadFile
+
+from .services.extraction_service import ExtractionError, extract_requirements
+from .services.llm.factory import get_provider
+from .services.pdf_service import extract_pages
+
+
+@app.post("/api/extract")
+def extract_endpoint(file: UploadFile = File(...)):
+    if not (file.filename or "").lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Please upload a PDF")
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    try:
+        tmp.write(file.file.read())
+        tmp.close()
+        pages = extract_pages(Path(tmp.name))
+        result = extract_requirements(pages, get_provider())
+    except ExtractionError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    finally:
+        os.unlink(tmp.name)
+    if hasattr(result, "model_dump"):
+        return result.model_dump(mode="json")
+    return result.dict()
