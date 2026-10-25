@@ -1,19 +1,42 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const inr = (n) => "Rs. " + Number(n).toLocaleString("en-IN");
 
-const CAT = {
-  FINANCIAL_TURNOVER: ["Turnover", "text-[#d29922] border-[#d29922]/40 bg-[#d29922]/10"],
-  REGISTRATION: ["Registration", "text-[#58a6ff] border-[#58a6ff]/40 bg-[#58a6ff]/10"],
-  CERTIFICATE: ["Certificate", "text-[#a371f7] border-[#a371f7]/40 bg-[#a371f7]/10"],
-  EXPERIENCE: ["Experience", "text-[#3fb950] border-[#3fb950]/40 bg-[#3fb950]/10"],
-  EMD: ["EMD", "text-[#f85149] border-[#f85149]/40 bg-[#f85149]/10"],
-  TENDER_FEE: ["Tender fee", "text-[#db6d28] border-[#db6d28]/40 bg-[#db6d28]/10"],
-  PERFORMANCE_SECURITY: ["Performance security", "text-[#39c5cf] border-[#39c5cf]/40 bg-[#39c5cf]/10"],
-  OTHER: ["Other", "text-[#8b949e] border-[#8b949e]/40 bg-[#8b949e]/10"],
+const TONE = {
+  blue: "text-[#0969da] bg-[#ddf4ff] border-[#54aeff66]",
+  green: "text-[#1a7f37] bg-[#dafbe1] border-[#4ac26b66]",
+  yellow: "text-[#9a6700] bg-[#fff8c5] border-[#d4a72c66]",
+  red: "text-[#cf222e] bg-[#ffebe9] border-[#ff818266]",
+  purple: "text-[#8250df] bg-[#fbefff] border-[#c297ff66]",
+  orange: "text-[#bc4c00] bg-[#fff1e5] border-[#fb8f4466]",
+  gray: "text-[#59636e] bg-[#f6f8fa] border-[#d0d7de]",
 };
-const cat = (c) => CAT[c] || [String(c).replaceAll("_", " "), CAT.OTHER[1]];
+
+const FLASH = {
+  red: "bg-[#ffebe9] border-[#ff818266] text-[#82071e]",
+  yellow: "bg-[#fff8c5] border-[#d4a72c66] text-[#633c01]",
+  green: "bg-[#dafbe1] border-[#4ac26b66] text-[#0f5323]",
+  blue: "bg-[#ddf4ff] border-[#54aeff66] text-[#0550ae]",
+  gray: "bg-[#f6f8fa] border-[#d0d7de] text-[#59636e]",
+};
+
+const nice = (c) => {
+  const t = String(c).replaceAll("_", " ").toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
+
+const CAT = {
+  FINANCIAL_TURNOVER: ["Turnover", "yellow"],
+  REGISTRATION: ["Registration", "blue"],
+  CERTIFICATE: ["Certificate", "purple"],
+  EXPERIENCE: ["Experience", "green"],
+  EMD: ["EMD", "red"],
+  TENDER_FEE: ["Tender fee", "orange"],
+  PERFORMANCE_SECURITY: ["Performance security", "blue"],
+  OTHER: ["Other", "gray"],
+};
+const cat = (c) => CAT[c] || [nice(c), "gray"];
 
 function threshold(r) {
   if (r.threshold_value == null) return "";
@@ -22,17 +45,12 @@ function threshold(r) {
   return r.threshold_value + " " + (r.threshold_unit || "");
 }
 
-const STEPS = [
-  "Reading the tender...",
-  "Finding eligibility requirements...",
-  "Checking exemptions...",
-  "Linking each requirement to its page...",
-  "Almost there...",
-];
+const STEPS = ["Read PDF pages", "Extract requirements", "Check exemptions", "Link source pages"];
 
-const btnGreen = "px-3 py-1.5 rounded-md bg-[#238636] hover:bg-[#2ea043] text-white text-sm font-medium border border-[#f0f6fc]/10";
-const btnGrey = "px-3 py-1.5 rounded-md bg-[#21262d] hover:bg-[#30363d] text-[#e6edf3] text-sm font-medium border border-[#30363d]";
-const inputCls = "w-full rounded-md bg-[#0d1117] border border-[#30363d] px-3 py-1.5 text-sm outline-none focus:border-[#58a6ff] placeholder:text-[#8b949e]";
+const btn = "inline-flex items-center justify-center h-8 px-3 text-sm font-medium rounded-[3px] border border-[#d0d7de] bg-[#f6f8fa] text-[#25292e] hover:bg-[#eaeef2] whitespace-nowrap";
+const btnSm = "inline-flex items-center justify-center h-6 px-2 text-xs font-medium rounded-[3px] border border-[#d0d7de] bg-[#f6f8fa] text-[#25292e] hover:bg-[#eaeef2] whitespace-nowrap";
+const btnPrimary = "inline-flex items-center justify-center h-8 px-3 text-sm font-medium rounded-[3px] border border-[#1f232826] bg-[#1f883d] text-white hover:bg-[#1a7f37] whitespace-nowrap";
+const inputCls = "w-full h-8 px-3 text-sm bg-white border border-[#d0d7de] rounded-[3px] outline-none focus:border-[#0969da] focus:ring-1 focus:ring-[#0969da] placeholder:text-[#59636e]";
 
 /* ---------- eligibility logic (runs in the browser on the extracted data) ---------- */
 function isMsme(x) {
@@ -73,13 +91,19 @@ function evaluate(r, p, held) {
   return { s: "review", n: "Check this one manually" };
 }
 
-const PILL = {
-  pass: ["Meets", "text-[#3fb950] border-[#3fb950]/40 bg-[#3fb950]/10"],
-  fail: ["Not met", "text-[#f85149] border-[#f85149]/40 bg-[#f85149]/10"],
-  gap: ["Missing", "text-[#d29922] border-[#d29922]/40 bg-[#d29922]/10"],
-  unknown: ["Need input", "text-[#8b949e] border-[#8b949e]/40 bg-[#8b949e]/10"],
-  info: ["Payment", "text-[#58a6ff] border-[#58a6ff]/40 bg-[#58a6ff]/10"],
-  review: ["Check", "text-[#8b949e] border-[#8b949e]/40 bg-[#8b949e]/10"],
+const STATUS = {
+  pass: ["Met", "green", "check", "text-[#1a7f37]"],
+  fail: ["Not met", "red", "x", "text-[#cf222e]"],
+  gap: ["Missing", "yellow", "alert", "text-[#9a6700]"],
+  unknown: ["Needs input", "gray", "alert", "text-[#59636e]"],
+  info: ["Payment", "blue", "dot", "text-[#0969da]"],
+  review: ["Manual check", "gray", "dot", "text-[#59636e]"],
+};
+
+const VERDICT = {
+  Proceed: { head: "All checks have passed", box: "border-[#4ac26b66]", bar: "bg-[#dafbe1]", ink: "text-[#1a7f37]", icon: "check" },
+  Investigate: { head: "Some checks need attention", box: "border-[#d4a72c66]", bar: "bg-[#fff8c5]", ink: "text-[#9a6700]", icon: "alert" },
+  Avoid: { head: "Some checks were not successful", box: "border-[#ff818266]", bar: "bg-[#ffebe9]", ink: "text-[#cf222e]", icon: "x" },
 };
 
 function loadProfile() {
@@ -90,6 +114,7 @@ function loadProfile() {
   return { turnover: "", order: "", msme: false };
 }
 
+/* ---------- built-in sample + saved results ---------- */
 const mk = (id, category, description, extra) =>
   Object.assign({
     id, category, description, is_mandatory: true, is_ambiguous: false,
@@ -133,9 +158,83 @@ function loadRecent() {
   return [];
 }
 
+/* ---------- small building blocks ---------- */
+function Label({ tone = "gray", children }) {
+  return (
+    <span className={"inline-block whitespace-nowrap text-xs leading-[18px] px-[7px] border rounded-[2px] font-medium " + TONE[tone]}>
+      {children}
+    </span>
+  );
+}
+
+function Box({ title, right, children, className = "" }) {
+  return (
+    <div className={"border border-[#d0d7de] rounded-[3px] bg-white " + className}>
+      {title !== undefined && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2 bg-[#f6f8fa] border-b border-[#d0d7de] rounded-t-[3px]">
+          <h3 className="text-sm font-semibold text-[#1f2328]">{title}</h3>
+          {right}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+function Icon({ name, className = "" }) {
+  const p = { width: 16, height: 16, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "square", className: className };
+  if (name === "check") return <svg {...p}><polyline points="3,8.5 6.5,12 13,4.5" /></svg>;
+  if (name === "x") return <svg {...p}><path d="M4 4L12 12M12 4L4 12" /></svg>;
+  if (name === "alert") return <svg {...p}><path d="M8 2.5L14 13H2L8 2.5Z" /><path d="M8 6.5V9.5M8 11.3V11.4" /></svg>;
+  return <svg {...p}><circle cx="8" cy="8" r="2.2" /></svg>;
+}
+
+function NavTab({ active, onClick, count, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className={"px-3 pt-1.5 pb-2 text-sm whitespace-nowrap border-b-2 hover:bg-[#eaeef2] rounded-t-[3px] " + (active ? "border-[#fd8c73] font-semibold" : "border-transparent")}
+    >
+      {children}
+      {count != null && <span className="ml-1.5 px-1.5 text-xs bg-[#818b981f] rounded-[2px]">{count}</span>}
+    </button>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <label className="block">
+      <span className="block text-sm font-semibold mb-1">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function Row({ k, v }) {
+  return (
+    <div className="flex justify-between gap-3 py-1 text-sm">
+      <span className="text-[#59636e]">{k}</span>
+      <span className="font-medium text-right">{v}</span>
+    </div>
+  );
+}
+
+function PayRow({ k, v, note }) {
+  return (
+    <div className="px-4 py-3 border-b border-[#d0d7de] last:border-b-0 flex items-start justify-between gap-3">
+      <div>
+        <p>{k}</p>
+        {note && <p className="text-xs text-[#1a7f37] mt-0.5">{note}</p>}
+      </div>
+      <p className="font-semibold text-right">{v}</p>
+    </div>
+  );
+}
+
 export default function App() {
   const [online, setOnline] = useState(null);
   const [phase, setPhase] = useState("idle");
+  const [view, setView] = useState("home");
   const [file, setFile] = useState(null);
   const [pdfUrl, setPdfUrl] = useState("");
   const [data, setData] = useState(null);
@@ -171,6 +270,15 @@ export default function App() {
     return () => { clearInterval(a); clearInterval(b); };
   }, [phase]);
 
+  function goHome() {
+    setViewer(null);
+    setView("home");
+    if (phase === "error") {
+      setError("");
+      setPhase("idle");
+    }
+  }
+
   async function upload(f) {
     if (!f) return;
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
@@ -184,6 +292,7 @@ export default function App() {
     setOpen({});
     setTab("reqs");
     setViewer(null);
+    setView("home");
     setPhase("loading");
     try {
       const form = new FormData();
@@ -194,6 +303,7 @@ export default function App() {
       if (!res.ok) throw new Error((json && json.detail) || "Extraction failed (status " + res.status + ")");
       setData(json);
       saveRecent(f, json);
+      setView("result");
       setPhase("done");
     } catch (e) {
       setError(String(e.message || e));
@@ -223,6 +333,7 @@ export default function App() {
     setTab("reqs");
     setViewer(null);
     setPhase("done");
+    setView("result");
   }
 
   function removeSaved(id) {
@@ -235,17 +346,6 @@ export default function App() {
 
   function loadSample() {
     openSaved({ name: "Sample tender (built-in)", data: SAMPLE });
-  }
-
-  function reset() {
-    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-    setPdfUrl("");
-    setPhase("idle");
-    setData(null);
-    setFile(null);
-    setError("");
-    setViewer(null);
-    if (input.current) input.current.value = "";
   }
 
   function download() {
@@ -261,6 +361,14 @@ export default function App() {
   function showSource(r) {
     setViewer({ page: r.source_page || 1, quote: r.source_quote || "", key: Date.now() });
   }
+
+  const copyText = async (key, text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      setTimeout(() => setCopied(""), 1500);
+    } catch (e) { /* ignore */ }
+  };
 
   const reqs = data ? data.requirements || [] : [];
   const categories = useMemo(() => Array.from(new Set(reqs.map((r) => r.category))), [reqs]);
@@ -294,12 +402,9 @@ export default function App() {
   const results = useMemo(() => reqs.map((r) => ({ r, e: evaluate(r, profile, done) })), [reqs, profile, done]);
   const hardFails = results.filter((x) => x.e.s === "fail" && x.r.is_mandatory);
   const gaps = results.filter((x) => x.e.s === "gap" || x.e.s === "unknown" || (x.e.s === "fail" && !x.r.is_mandatory));
+  const passN = results.filter((x) => x.e.s === "pass").length;
   const verdict = hardFails.length > 0 ? "Avoid" : gaps.length > 0 ? "Investigate" : "Proceed";
-  const VCOL = {
-    Proceed: "border-[#3fb950]/40 bg-[#3fb950]/10 text-[#3fb950]",
-    Investigate: "border-[#d29922]/40 bg-[#d29922]/10 text-[#d29922]",
-    Avoid: "border-[#f85149]/40 bg-[#f85149]/10 text-[#f85149]",
-  };
+  const VV = VERDICT[verdict];
 
   const emdReq = reqs.find((r) => r.category === "EMD");
   const feeReq = reqs.find((r) => r.category === "TENDER_FEE");
@@ -314,14 +419,8 @@ export default function App() {
 
   const deadlineMs = data && data.bid_deadline ? new Date(data.bid_deadline).getTime() : NaN;
   const daysLeft = isNaN(deadlineMs) ? null : Math.ceil((deadlineMs - Date.now()) / 86400000);
-  const urgency = daysLeft == null ? null : daysLeft < 0 ? "closed" : daysLeft <= 3 ? "urgent" : daysLeft <= 7 ? "soon" : "ok";
+  const urgency = daysLeft == null ? null : daysLeft < 0 ? "red" : daysLeft <= 3 ? "red" : daysLeft <= 7 ? "yellow" : "green";
   const leftLabel = daysLeft == null ? "N/A" : daysLeft < 0 ? "Closed " + Math.abs(daysLeft) + " day(s) ago" : daysLeft === 0 ? "Closes today" : daysLeft + " day(s) left";
-  const URG = {
-    closed: "border-[#f85149]/40 bg-[#f85149]/10 text-[#f85149]",
-    urgent: "border-[#f85149]/40 bg-[#f85149]/10 text-[#f85149]",
-    soon: "border-[#d29922]/40 bg-[#d29922]/10 text-[#d29922]",
-    ok: "border-[#3fb950]/40 bg-[#3fb950]/10 text-[#3fb950]",
-  };
 
   const queries = reqs
     .filter((r) => r.is_ambiguous || (r.exemptions && r.exemptions.length > 0))
@@ -338,363 +437,435 @@ export default function App() {
       };
     });
 
-  const copyText = async (key, text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(key);
-      setTimeout(() => setCopied(""), 1500);
-    } catch (e) { /* ignore */ }
-  };
-
   const mandatory = reqs.filter((r) => r.is_mandatory).length;
   const withEx = reqs.filter((r) => r.exemptions && r.exemptions.length > 0).length;
   const ambiguous = reqs.filter((r) => r.is_ambiguous).length;
   const ready = Object.values(done).filter(Boolean).length;
+  const hasResult = !!data && phase === "done";
+
+  function openTab(t) {
+    setTab(t);
+    setView("result");
+  }
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-[#e6edf3] print:bg-white print:text-black">
-      <header className="print:hidden bg-[#161b22] border-b border-[#30363d] px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-[#e6edf3] text-[#0d1117] grid place-items-center font-bold">B</div>
-          <div className="text-sm">
-            <span className="text-[#8b949e]">bidready</span> <span className="text-[#8b949e]">/</span> <b className="text-[#e6edf3]">tender-analysis</b>
-            <span className="ml-2 text-xs border border-[#30363d] rounded-full px-2 py-0.5 text-[#8b949e]">Public</span>
+    <div className="min-h-screen bg-white text-[#1f2328] text-sm leading-[1.5] print:bg-white print:text-black">
+      <header className="print:hidden bg-[#f6f8fa] border-b border-[#d0d7de]">
+        <div className="max-w-[1216px] mx-auto px-4 md:px-6">
+          <div className="flex items-center gap-3 pt-4 pb-3">
+            <button
+              onClick={goHome}
+              title="BidReady home"
+              aria-label="BidReady home"
+              className="h-8 w-8 grid place-items-center bg-[#1f2328] hover:bg-[#32383f] text-white text-base font-bold rounded-[3px]"
+            >
+              B
+            </button>
+            <nav className="min-w-0 flex items-center gap-1.5 text-base">
+              <button onClick={goHome} className="text-[#0969da] hover:underline">BidReady</button>
+              <span className="text-[#59636e]">/</span>
+              <span className="font-semibold truncate max-w-[50vw]">{view === "result" && file ? file.name : "Tender analysis"}</span>
+            </nav>
+            <div className="ml-auto">
+              <Label tone={online === null ? "gray" : online ? "green" : "red"}>
+                {online === null ? "API: checking" : online ? "API: connected" : "API: offline"}
+              </Label>
+            </div>
+          </div>
+          <div className="flex gap-1 overflow-x-auto">
+            <NavTab active={view === "home"} onClick={goHome}>Analyze</NavTab>
+            {hasResult && (
+              <>
+                <NavTab active={view === "result" && tab === "reqs"} onClick={() => openTab("reqs")} count={reqs.length}>Requirements</NavTab>
+                <NavTab active={view === "result" && tab === "fit"} onClick={() => openTab("fit")}>Can I bid?</NavTab>
+                <NavTab active={view === "result" && tab === "cash"} onClick={() => openTab("cash")}>Cash needed</NavTab>
+                <NavTab active={view === "result" && tab === "queries"} onClick={() => openTab("queries")} count={queries.length}>Pre-bid queries</NavTab>
+              </>
+            )}
           </div>
         </div>
-        <span className={"text-xs px-2.5 py-1 rounded-full border " + (online ? "text-[#3fb950] border-[#3fb950]/40 bg-[#3fb950]/10" : "text-[#f85149] border-[#f85149]/40 bg-[#f85149]/10")}>
-          {online === null ? "checking..." : online ? "Backend connected" : "Backend offline"}
-        </span>
       </header>
 
-      <main className="print:hidden max-w-6xl mx-auto px-6 py-8">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <div>
-            <h1 className="text-2xl font-semibold">BidReady AI</h1>
-            <p className="text-sm text-[#8b949e]">Upload a tender. Know what you need before you bid.</p>
-          </div>
-          {phase === "done" && (
-            <div className="flex gap-2">
-              <button onClick={() => window.print()} className={btnGrey}>Print bid brief</button>
-              <button onClick={download} className={btnGrey}>Download JSON</button>
-              <button onClick={reset} className={btnGreen}>Upload another tender</button>
-            </div>
-          )}
-        </div>
+      <main className="print:hidden max-w-[1216px] mx-auto px-4 md:px-6 py-6">
+        {view === "home" && (
+          <div className="grid lg:grid-cols-[1fr_320px] gap-8">
+            <section className="min-w-0">
+              <h1 className="text-2xl font-semibold">Analyze a tender</h1>
+              <p className="mt-1 text-[#59636e] max-w-[620px]">
+                Upload a tender PDF. BidReady lists the eligibility requirements, fees and deadlines, and links each one to the page it was taken from.
+              </p>
 
-        {(phase === "idle" || phase === "error") && (
-          <label
-            onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
-            onDragLeave={() => setDrag(false)}
-            onDrop={(e) => { e.preventDefault(); setDrag(false); upload(e.dataTransfer.files[0]); }}
-            className={"block cursor-pointer rounded-md border border-dashed p-14 text-center transition " + (drag ? "border-[#58a6ff] bg-[#58a6ff]/10" : "border-[#30363d] bg-[#161b22] hover:border-[#58a6ff]/60")}
-          >
-            <input ref={input} type="file" accept="application/pdf" className="hidden" onChange={(e) => upload(e.target.files[0])} />
-            <p className="text-lg font-medium">{file ? file.name : "Drop a tender PDF here, or click to choose"}</p>
-            <p className="text-sm text-[#8b949e] mt-1">Every requirement comes with the page and the quote it was taken from</p>
-            <span className={"inline-block mt-5 " + btnGreen}>Choose PDF</span>
-          </label>
-        )}
-
-        {(phase === "idle" || phase === "error") && (
-          <div className="mt-6 rounded-md border border-[#30363d] overflow-hidden">
-            <div className="bg-[#161b22] px-4 py-2 text-sm flex items-center justify-between gap-3 border-b border-[#30363d]">
-              <span className="text-[#8b949e]">Recent tenders (saved in this browser)</span>
-              <button onClick={loadSample} className={btnGrey}>Load sample tender</button>
-            </div>
-            {recent.length === 0 && (
-              <div className="px-4 py-4 text-sm text-[#8b949e]">Nothing saved yet. Every tender you analyse appears here and reopens instantly.</div>
-            )}
-            {recent.map((x) => (
-              <div key={x.id} className="px-4 py-3 border-b border-[#30363d] last:border-b-0 flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm truncate">{x.name}</p>
-                  <p className="text-xs text-[#8b949e]">{(x.data.requirements || []).length} requirements - saved {new Date(x.savedAt).toLocaleString()}</p>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <button onClick={() => openSaved(x)} className={btnGreen}>Open</button>
-                  <button onClick={() => removeSaved(x.id)} className={btnGrey}>Remove</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {phase === "loading" && (
-          <div className="rounded-md border border-[#30363d] bg-[#161b22] p-12 text-center">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-[#58a6ff] border-t-transparent mb-4"></div>
-            <p className="font-medium">{STEPS[step]}</p>
-            <p className="text-sm text-[#8b949e] mt-1">{file ? file.name : ""} - {secs}s</p>
-            <p className="text-xs text-[#8b949e] mt-3">Large tenders can take up to a minute. Keep this tab open.</p>
-          </div>
-        )}
-
-        {phase === "error" && (
-          <div className="mt-6 rounded-md border border-[#f85149]/40 bg-[#f85149]/10 p-4">
-            <p className="font-semibold text-[#f85149]">Something went wrong</p>
-            <p className="text-sm mt-1 break-words text-[#e6edf3]">{error}</p>
-            <div className="mt-3 flex gap-2">
-              <button onClick={() => upload(file)} className={btnGreen}>Retry</button>
-              <button onClick={reset} className={btnGrey}>Choose another file</button>
-            </div>
-          </div>
-        )}
-
-        {phase === "done" && data && (
-          <div className="grid lg:grid-cols-[1fr_320px] gap-6">
-            <section>
-              <div className="rounded-md border border-[#30363d] bg-[#161b22] px-4 py-3 mb-4">
-                <p className="text-xs text-[#8b949e]">Tender {data.tender_number || "-"}</p>
-                <h2 className="text-lg font-semibold">{data.title || "Untitled tender"}</h2>
-              </div>
-
-              {!pdfUrl && (
-                <div className="rounded-md border border-[#30363d] bg-[#161b22] px-4 py-2 mb-4 text-xs text-[#8b949e]">
-                  Showing a saved result. The original PDF is not stored, so View in PDF shows the quote only. Re-upload the file to see the page.
-                </div>
-              )}
-              {daysLeft != null && (
-                <div className={"rounded-md border px-4 py-2 mb-4 text-sm flex items-center justify-between " + URG[urgency]}>
-                  <span>Bid deadline: {data.bid_deadline.replace("T", " ").slice(0, 16)}</span>
-                  <b>{leftLabel}</b>
+              {hasResult && (
+                <div className={"mt-5 border rounded-[3px] px-4 py-3 flex items-center justify-between gap-3 " + FLASH.blue}>
+                  <span className="min-w-0 truncate"><b>{file ? file.name : "Analysis"}</b> is still open.</span>
+                  <button onClick={() => setView("result")} className={btn}>Back to results</button>
                 </div>
               )}
 
-              <div className="flex gap-1 border-b border-[#30363d] mb-4">
-                <TabBtn active={tab === "reqs"} onClick={() => setTab("reqs")}>Requirements</TabBtn>
-                <TabBtn active={tab === "fit"} onClick={() => setTab("fit")}>Can I bid?</TabBtn>
-                <TabBtn active={tab === "cash"} onClick={() => setTab("cash")}>Cash needed</TabBtn>
-                <TabBtn active={tab === "queries"} onClick={() => setTab("queries")}>Pre-bid queries ({queries.length})</TabBtn>
-              </div>
-
-              {tab === "reqs" && (
-                <div>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    <Tab active={filter === "ALL"} onClick={() => setFilter("ALL")}>All <Count n={reqs.length} /></Tab>
-                    {categories.map((c) => (
-                      <Tab key={c} active={filter === c} onClick={() => setFilter(c)}>{cat(c)[0]}</Tab>
-                    ))}
+              {phase === "error" && (
+                <div className={"mt-5 border rounded-[3px] px-4 py-3 " + FLASH.red}>
+                  <p className="font-semibold">The tender could not be analyzed</p>
+                  <p className="mt-1 break-words">{error}</p>
+                  <div className="mt-3 flex gap-2">
+                    <button onClick={() => upload(file)} className={btnPrimary}>Retry</button>
+                    <button onClick={() => { setError(""); setPhase("idle"); }} className={btn}>Dismiss</button>
                   </div>
+                </div>
+              )}
+
+              {phase !== "loading" && (
+                <label
+                  onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+                  onDragLeave={() => setDrag(false)}
+                  onDrop={(e) => { e.preventDefault(); setDrag(false); upload(e.dataTransfer.files[0]); }}
+                  className={"mt-5 block cursor-pointer border border-dashed rounded-[3px] px-6 py-12 text-center " + (drag ? "border-[#0969da] bg-[#ddf4ff]" : "border-[#d0d7de] bg-[#f6f8fa] hover:bg-[#eff2f5]")}
+                >
                   <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Go to requirement..."
-                    className={"mb-4 " + inputCls}
+                    ref={input}
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={(e) => { const f = e.target.files[0]; e.target.value = ""; upload(f); }}
                   />
-                  <div className="rounded-md border border-[#30363d] overflow-hidden">
-                    <div className="bg-[#161b22] px-4 py-2 text-sm text-[#8b949e] border-b border-[#30363d]">
-                      {shown.length} requirement{shown.length === 1 ? "" : "s"}
-                    </div>
-                    {shown.length === 0 && <div className="px-4 py-6 text-sm text-[#8b949e]">No requirements match.</div>}
-                    {shown.map((r) => (
-                      <div key={r.id} className="border-b border-[#30363d] last:border-b-0">
-                        <button
-                          onClick={() => setOpen({ ...open, [r.id]: !open[r.id] })}
-                          className="w-full text-left px-4 py-3 hover:bg-[#161b22] flex items-start gap-3"
-                        >
-                          <span className={"shrink-0 mt-0.5 text-xs px-2 py-0.5 rounded-full border " + cat(r.category)[1]}>{cat(r.category)[0]}</span>
-                          <span className="flex-1 text-sm">
-                            {r.description}
-                            <span className="block mt-1">
-                              {r.is_mandatory && <Tag color="text-[#f85149] border-[#f85149]/40">Mandatory</Tag>}
-                              {r.is_ambiguous && <Tag color="text-[#d29922] border-[#d29922]/40">Needs review</Tag>}
-                              {r.exemptions && r.exemptions.length > 0 && <Tag color="text-[#3fb950] border-[#3fb950]/40">Exemption available</Tag>}
-                            </span>
-                          </span>
-                          <span className="shrink-0 text-right text-xs text-[#8b949e]">
-                            <span className="block text-sm font-semibold text-[#58a6ff]">{threshold(r)}</span>
-                            Page {r.source_page}
-                          </span>
-                        </button>
-                        {open[r.id] && (
-                          <div className="px-4 pb-4 pl-6 text-sm bg-[#0d1117]">
-                            {r.document_type_needed && (
-                              <p className="text-[#8b949e] mt-1">Document needed: <span className="text-[#e6edf3]">{r.document_type_needed}</span></p>
-                            )}
-                            {(r.exemptions || []).map((x, i) => (
-                              <div key={i} className="mt-2 rounded-md border border-[#3fb950]/30 bg-[#3fb950]/10 p-3 text-[#3fb950]">
-                                <b>{x.applies_to} - {String(x.effect || "").toLowerCase()}</b>
-                                {x.proof_document_type ? " - proof: " + x.proof_document_type : ""}
-                                {x.condition_text && <p className="mt-1 text-xs text-[#e6edf3]/80">{x.condition_text}</p>}
-                              </div>
-                            ))}
-                            <p className="mt-3 text-xs text-[#8b949e] border-l-2 border-[#30363d] pl-3">
-                              Page {r.source_page}: "{r.source_quote}"
-                            </p>
-                            <button onClick={() => showSource(r)} className={"mt-3 " + btnGrey}>View in PDF (page {r.source_page})</button>
-                          </div>
+                  <p className="font-semibold">Drag a tender PDF here</p>
+                  <p className="text-[#59636e] my-1">or</p>
+                  <span className={btnPrimary}>Choose PDF</span>
+                </label>
+              )}
+
+              {phase === "loading" && (
+                <Box
+                  className="mt-5"
+                  title={"Analyzing " + (file ? file.name : "tender")}
+                  right={<span className="text-xs text-[#59636e]">{secs}s</span>}
+                >
+                  {STEPS.map((label, i) => (
+                    <div key={label} className="flex items-center justify-between px-4 py-2.5 border-b border-[#d0d7de]">
+                      <span className="flex items-center gap-2">
+                        {i < step ? (
+                          <Icon name="check" className="text-[#1a7f37]" />
+                        ) : i === step ? (
+                          <span className="inline-block h-4 w-4 border-2 border-[#0969da] border-t-transparent rounded-full animate-spin"></span>
+                        ) : (
+                          <Icon name="dot" className="text-[#818b98]" />
                         )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {tab === "fit" && (
-                <div>
-                  <div className={"rounded-md border p-5 " + VCOL[verdict]}>
-                    <p className="text-xs uppercase tracking-wide opacity-80">Indicative verdict</p>
-                    <p className="text-3xl font-bold mt-1">{verdict}</p>
-                    <p className="text-sm mt-2 text-[#e6edf3]">
-                      {verdict === "Avoid" && hardFails.length + " mandatory requirement" + (hardFails.length === 1 ? "" : "s") + " not met based on the figures you entered."}
-                      {verdict === "Investigate" && gaps.length + " item" + (gaps.length === 1 ? "" : "s") + " still need a document or a figure before you can decide."}
-                      {verdict === "Proceed" && "Everything checked is met. Verify the quotes before you submit."}
-                    </p>
-                  </div>
-
-                  <div className="rounded-md border border-[#30363d] p-4 mt-4">
-                    <h3 className="font-semibold mb-3">Your company</h3>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      <Field label="Average annual turnover (Rs crore)">
-                        <input
-                          type="number" min="0" step="0.01" placeholder="e.g. 2.5"
-                          value={profile.turnover}
-                          onChange={(e) => setProfile({ ...profile, turnover: e.target.value })}
-                          className={inputCls}
-                        />
-                      </Field>
-                      <Field label="Largest similar order completed (Rs lakh)">
-                        <input
-                          type="number" min="0" step="0.1" placeholder="e.g. 25"
-                          value={profile.order}
-                          onChange={(e) => setProfile({ ...profile, order: e.target.value })}
-                          className={inputCls}
-                        />
-                      </Field>
+                        {label}
+                      </span>
+                      <span className="text-xs text-[#59636e]">{i < step ? "Done" : i === step ? "Running" : "Queued"}</span>
                     </div>
-                    <label className="flex items-center gap-3 mt-4 cursor-pointer">
-                      <input
-                        type="checkbox" checked={profile.msme}
-                        onChange={(e) => setProfile({ ...profile, msme: e.target.checked })}
-                        className="h-4 w-4 accent-[#238636]"
-                      />
-                      <span className="text-sm">We are a registered MSME (Udyam)</span>
-                    </label>
-                    <p className="text-xs text-[#8b949e] mt-3">Tick the documents you hold in the checklist on the right. Your inputs stay in this browser only.</p>
+                  ))}
+                  <div className="px-4 py-2 text-xs text-[#59636e] bg-[#f6f8fa] rounded-b-[3px]">
+                    Large tenders can take up to a minute. Keep this tab open.
                   </div>
-
-                  <div className="rounded-md border border-[#30363d] overflow-hidden mt-4">
-                    <div className="bg-[#161b22] px-4 py-2 text-sm text-[#8b949e] border-b border-[#30363d]">Requirement by requirement</div>
-                    {results.map(({ r, e }) => (
-                      <div key={r.id} className="px-4 py-3 border-b border-[#30363d] last:border-b-0 flex items-start gap-3">
-                        <span className={"shrink-0 mt-0.5 text-xs px-2 py-0.5 rounded-full border " + PILL[e.s][1]}>{PILL[e.s][0]}</span>
-                        <div className="flex-1 text-sm">
-                          <p>{r.description}</p>
-                          <p className="text-xs text-[#8b949e] mt-1">{e.n}</p>
-                        </div>
-                        <button onClick={() => showSource(r)} className="shrink-0 text-xs text-[#58a6ff] hover:underline">Page {r.source_page}</button>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-[#8b949e] mt-3">This is an indicative check based on the figures you enter. Always confirm against the tender document.</p>
-                </div>
-              )}
-
-              {tab === "queries" && (
-                <div>
-                  <p className="text-sm text-[#8b949e] mb-3">Draft questions to send to the tender authority before the pre-bid deadline. Replace [Company name] before sending.</p>
-                  {queries.length === 0 && (
-                    <div className="rounded-md border border-[#30363d] bg-[#161b22] p-4 text-sm text-[#8b949e]">Nothing unclear was flagged in this tender.</div>
-                  )}
-                  {queries.length > 0 && (
-                    <div className="mb-3">
-                      <button onClick={() => copyText("all", queries.map((q) => q.text).join("\n\n----------\n\n"))} className={btnGreen}>
-                        {copied === "all" ? "Copied" : "Copy all queries"}
-                      </button>
-                    </div>
-                  )}
-                  <div className="space-y-3">
-                    {queries.map((q) => (
-                      <div key={q.id} className="rounded-md border border-[#30363d] p-4">
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <Tag color={q.kind === "Clarification" ? "text-[#d29922] border-[#d29922]/40" : "text-[#3fb950] border-[#3fb950]/40"}>{q.kind}</Tag>
-                          <span className="text-xs text-[#8b949e]">Page {q.page}</span>
-                        </div>
-                        <pre className="whitespace-pre-wrap text-xs bg-[#0d1117] border border-[#30363d] rounded-md p-3 text-[#e6edf3]">{q.text}</pre>
-                        <div className="flex gap-2 mt-3">
-                          <button onClick={() => copyText(q.id, q.text)} className={btnGrey}>{copied === q.id ? "Copied" : "Copy"}</button>
-                          <button onClick={() => showSource(reqs.find((x) => x.id === q.id))} className={btnGrey}>View in PDF</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {tab === "cash" && (
-                <div>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="rounded-md border border-[#30363d] bg-[#161b22] p-5">
-                      <p className="text-xs text-[#8b949e]">To submit the bid (EMD + tender fee)</p>
-                      <p className="text-3xl font-bold mt-1">{inr(profile.msme && emdWaivable ? upfrontYou : upfrontFull)}</p>
-                      <p className="text-xs text-[#8b949e] mt-2">
-                        {profile.msme && emdWaivable ? "Your MSME status waives the EMD." : "Without any exemption."}
-                      </p>
-                    </div>
-                    <div className="rounded-md border border-[#30363d] bg-[#161b22] p-5">
-                      <p className="text-xs text-[#8b949e]">If you win (performance security)</p>
-                      <p className="text-3xl font-bold mt-1">{psAmt != null ? inr(psAmt) : psPct != null ? psPct + "%" : "N/A"}</p>
-                      <p className="text-xs text-[#8b949e] mt-2">
-                        {psAmt != null ? psPct + "% of the estimated cost " + inr(data.estimated_cost) : psPct != null ? "of the contract value (no estimated cost in the tender)" : "Not stated in the tender"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-md border border-[#30363d] overflow-hidden mt-4">
-                    <div className="bg-[#161b22] px-4 py-2 text-sm text-[#8b949e] border-b border-[#30363d]">Breakdown</div>
-                    <Row2 k="Earnest money deposit (EMD)" v={emdReq ? (emdAmt ? inr(emdAmt) : threshold(emdReq) || "See tender") : "Not found"} note={emdWaivable ? "Waived for MSME with Udyam proof" : ""} />
-                    <Row2 k="Tender document fee" v={feeReq ? (feeAmt ? inr(feeAmt) : threshold(feeReq) || "See tender") : "Not found"} note="" />
-                    <Row2 k="Performance security" v={psReq ? (psAmt != null ? inr(psAmt) : threshold(psReq) || "See tender") : "Not found"} note="Only payable if you win" />
-                  </div>
-                  {(emdReq || feeReq || psReq) && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {emdReq && <button onClick={() => showSource(emdReq)} className={btnGrey}>EMD source (page {emdReq.source_page})</button>}
-                      {feeReq && <button onClick={() => showSource(feeReq)} className={btnGrey}>Fee source (page {feeReq.source_page})</button>}
-                      {psReq && <button onClick={() => showSource(psReq)} className={btnGrey}>Security source (page {psReq.source_page})</button>}
-                    </div>
-                  )}
-                </div>
+                </Box>
               )}
             </section>
 
-            <aside className="space-y-4">
-              <div className="rounded-md border border-[#30363d] p-4">
-                <h3 className="font-semibold mb-3">About</h3>
-                <Row k="Estimated cost" v={data.estimated_cost ? inr(data.estimated_cost) : "N/A"} />
-                <Row k="Bid deadline" v={data.bid_deadline ? data.bid_deadline.replace("T", " ").slice(0, 16) : "N/A"} />
-                <Row k="Time left" v={leftLabel} />
-                <Row k="Requirements" v={reqs.length} />
-                <Row k="Mandatory" v={mandatory} />
-                <Row k="With exemptions" v={withEx} />
-                <Row k="Needs review" v={ambiguous} />
-              </div>
-
-              <div className="rounded-md border border-[#30363d] p-4">
-                <h3 className="font-semibold">Documents you hold</h3>
-                <p className="text-xs text-[#8b949e] mt-1">{ready} of {docs.length} ready - this feeds the Can I bid? check</p>
-                {docs.length === 0 && <p className="text-sm text-[#8b949e] mt-3">No specific documents were listed.</p>}
-                <ul className="mt-3 space-y-3">
-                  {docs.map((d) => (
-                    <li key={d.name}>
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={!!done[d.name]}
-                          onChange={() => setDone({ ...done, [d.name]: !done[d.name] })}
-                          className="mt-1 h-4 w-4 accent-[#238636]"
-                        />
-                        <span className={done[d.name] ? "line-through text-[#8b949e]" : ""}>
-                          <span className="block text-sm">{d.name}</span>
-                          <span className="block text-xs text-[#8b949e]">{d.note}</span>
-                        </span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <aside className="min-w-0">
+              <Box title="Recent analyses" right={<button onClick={loadSample} className={btnSm}>Load sample</button>}>
+                {recent.length === 0 && (
+                  <div className="px-4 py-4 text-[#59636e]">
+                    No saved analyses yet. Results are kept in this browser only.
+                  </div>
+                )}
+                {recent.map((x) => (
+                  <div key={x.id} className="px-4 py-3 border-b border-[#d0d7de] last:border-b-0">
+                    <p className="font-semibold truncate">{x.name}</p>
+                    <p className="text-xs text-[#59636e]">
+                      {(x.data.requirements || []).length} requirements - {new Date(x.savedAt).toLocaleString()}
+                    </p>
+                    <div className="flex gap-2 mt-2">
+                      <button onClick={() => openSaved(x)} className={btnSm}>Open</button>
+                      <button onClick={() => removeSaved(x.id)} className={btnSm}>Remove</button>
+                    </div>
+                  </div>
+                ))}
+              </Box>
             </aside>
           </div>
         )}
+
+        {view === "result" && data && (
+          <div>
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div className="min-w-0">
+                <h1 className="text-xl font-semibold break-words">{data.title || "Untitled tender"}</h1>
+                <p className="text-[#59636e] mt-0.5">Tender no. {data.tender_number || "-"}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => window.print()} className={btn}>Print bid brief</button>
+                <button onClick={download} className={btn}>Download JSON</button>
+                <button onClick={goHome} className={btnPrimary}>New analysis</button>
+              </div>
+            </div>
+
+            {!pdfUrl && (
+              <div className={"border rounded-[3px] px-4 py-2 mb-3 text-xs " + FLASH.gray}>
+                Showing a saved result. The original PDF is not stored, so View in PDF shows the quote only. Upload the file again to see the page.
+              </div>
+            )}
+
+            {daysLeft != null && (
+              <div className={"border rounded-[3px] px-4 py-2 mb-4 flex items-center justify-between gap-3 " + FLASH[urgency]}>
+                <span>Bid deadline: {data.bid_deadline.replace("T", " ").slice(0, 16)}</span>
+                <b>{leftLabel}</b>
+              </div>
+            )}
+
+            <div className="grid lg:grid-cols-[1fr_296px] gap-6">
+              <section className="min-w-0">
+                {tab === "reqs" && (
+                  <div>
+                    <div className="flex flex-col sm:flex-row gap-2 mb-3">
+                      <input
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search requirements"
+                        className={inputCls + " sm:flex-1"}
+                      />
+                      <select
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                        className="h-8 px-2 text-sm border border-[#d0d7de] rounded-[3px] bg-[#f6f8fa] text-[#25292e]"
+                      >
+                        <option value="ALL">All categories ({reqs.length})</option>
+                        {categories.map((c) => (
+                          <option key={c} value={c}>{cat(c)[0]} ({reqs.filter((r) => r.category === c).length})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <Box title={shown.length + (shown.length === 1 ? " requirement" : " requirements")}>
+                      {shown.length === 0 && <div className="px-4 py-8 text-center text-[#59636e]">No requirements match your search.</div>}
+                      {shown.map((r) => (
+                        <div key={r.id} className="border-b border-[#d0d7de] last:border-b-0">
+                          <button
+                            onClick={() => setOpen({ ...open, [r.id]: !open[r.id] })}
+                            className="w-full text-left px-4 py-3 hover:bg-[#f6f8fa] flex items-start gap-3"
+                          >
+                            <span className={"mt-0.5 w-3 shrink-0 text-[#59636e] " + (open[r.id] ? "rotate-90" : "")}>&rsaquo;</span>
+                            <span className="flex-1 min-w-0">
+                              <span className="block font-semibold">{r.description}</span>
+                              <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                <Label tone={cat(r.category)[1]}>{cat(r.category)[0]}</Label>
+                                {r.is_mandatory && <Label tone="red">Mandatory</Label>}
+                                {r.is_ambiguous && <Label tone="yellow">Needs review</Label>}
+                                {r.exemptions && r.exemptions.length > 0 && <Label tone="green">Exemption</Label>}
+                              </span>
+                            </span>
+                            <span className="shrink-0 text-right text-xs text-[#59636e]">
+                              {threshold(r) && <span className="block text-sm font-semibold text-[#1f2328]">{threshold(r)}</span>}
+                              Page {r.source_page}
+                            </span>
+                          </button>
+                          {open[r.id] && (
+                            <div className="px-4 pb-4 pl-10">
+                              {r.document_type_needed && (
+                                <p className="text-[#59636e]">Document needed: <span className="text-[#1f2328] font-medium">{r.document_type_needed}</span></p>
+                              )}
+                              {(r.exemptions || []).map((x, i) => (
+                                <div key={i} className={"mt-2 border rounded-[3px] px-3 py-2 " + FLASH.green}>
+                                  <b>{x.applies_to} - {String(x.effect || "").toLowerCase()}</b>
+                                  {x.proof_document_type ? " - proof: " + x.proof_document_type : ""}
+                                  {x.condition_text && <p className="mt-1 text-xs">{x.condition_text}</p>}
+                                </div>
+                              ))}
+                              <blockquote className="mt-3 border-l-4 border-[#d0d7de] pl-3 text-[#59636e]">
+                                {r.source_quote}
+                                <span className="block text-xs mt-1">Page {r.source_page}</span>
+                              </blockquote>
+                              <button onClick={() => showSource(r)} className={"mt-3 " + btnSm}>View in PDF (page {r.source_page})</button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </Box>
+                  </div>
+                )}
+
+                {tab === "fit" && (
+                  <div className="space-y-4">
+                    <Box title="Company details">
+                      <div className="p-4">
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <Field label="Average annual turnover (Rs crore)">
+                            <input
+                              type="number" min="0" step="0.01" placeholder="e.g. 2.5"
+                              value={profile.turnover}
+                              onChange={(e) => setProfile({ ...profile, turnover: e.target.value })}
+                              className={inputCls}
+                            />
+                          </Field>
+                          <Field label="Largest similar order completed (Rs lakh)">
+                            <input
+                              type="number" min="0" step="0.1" placeholder="e.g. 25"
+                              value={profile.order}
+                              onChange={(e) => setProfile({ ...profile, order: e.target.value })}
+                              className={inputCls}
+                            />
+                          </Field>
+                        </div>
+                        <label className="flex items-center gap-2 mt-4 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={profile.msme}
+                            onChange={(e) => setProfile({ ...profile, msme: e.target.checked })}
+                            className="h-4 w-4 accent-[#1f883d]"
+                          />
+                          <span>Registered MSME (Udyam)</span>
+                        </label>
+                        <p className="text-xs text-[#59636e] mt-3">Tick the documents you hold in the sidebar. These values stay in this browser.</p>
+                      </div>
+                    </Box>
+
+                    <div className={"border rounded-[3px] " + VV.box}>
+                      <div className={"px-4 py-3 flex items-center gap-3 rounded-t-[3px] " + VV.bar + " " + VV.ink}>
+                        <Icon name={VV.icon} className="shrink-0" />
+                        <div className="flex-1">
+                          <p className="font-semibold">{VV.head}</p>
+                          <p className="text-xs">{passN} met, {hardFails.length} not met, {gaps.length} to confirm</p>
+                        </div>
+                        <span className="text-xs font-semibold uppercase tracking-wide">{verdict}</span>
+                      </div>
+                      {results.map(({ r, e }) => {
+                        const st = STATUS[e.s];
+                        return (
+                          <div key={r.id} className="px-4 py-3 border-t border-[#d0d7de] bg-white flex items-start gap-3">
+                            <Icon name={st[2]} className={"mt-0.5 shrink-0 " + st[3]} />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium">{r.description}</p>
+                              <p className="text-xs text-[#59636e] mt-0.5">{e.n}</p>
+                            </div>
+                            <Label tone={st[1]}>{st[0]}</Label>
+                            <button onClick={() => showSource(r)} className="shrink-0 text-xs text-[#0969da] hover:underline">Page {r.source_page}</button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-[#59636e]">
+                      Indicative check based on the figures you enter. Always confirm against the tender document.
+                    </p>
+                  </div>
+                )}
+
+                {tab === "cash" && (
+                  <div className="space-y-4">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <Box title="To submit the bid">
+                        <div className="p-4">
+                          <p className="text-2xl font-semibold">{inr(profile.msme && emdWaivable ? upfrontYou : upfrontFull)}</p>
+                          <p className="text-xs text-[#59636e] mt-1">
+                            EMD plus tender fee. {profile.msme && emdWaivable ? "Your MSME status waives the EMD." : "Without any exemption."}
+                          </p>
+                        </div>
+                      </Box>
+                      <Box title="If you win">
+                        <div className="p-4">
+                          <p className="text-2xl font-semibold">{psAmt != null ? inr(psAmt) : psPct != null ? psPct + "%" : "N/A"}</p>
+                          <p className="text-xs text-[#59636e] mt-1">
+                            {psAmt != null ? "Performance security: " + psPct + "% of the estimated cost " + inr(data.estimated_cost) : psPct != null ? "Performance security, as a share of the contract value" : "Not stated in the tender"}
+                          </p>
+                        </div>
+                      </Box>
+                    </div>
+
+                    <Box title="Breakdown">
+                      <PayRow k="Earnest money deposit (EMD)" v={emdReq ? (emdAmt ? inr(emdAmt) : threshold(emdReq) || "See tender") : "Not found"} note={emdWaivable ? "Waived for MSME with Udyam proof" : ""} />
+                      <PayRow k="Tender document fee" v={feeReq ? (feeAmt ? inr(feeAmt) : threshold(feeReq) || "See tender") : "Not found"} note="" />
+                      <PayRow k="Performance security (only if you win)" v={psReq ? (psAmt != null ? inr(psAmt) : threshold(psReq) || "See tender") : "Not found"} note="" />
+                    </Box>
+
+                    {(emdReq || feeReq || psReq) && (
+                      <div className="flex flex-wrap gap-2">
+                        {emdReq && <button onClick={() => showSource(emdReq)} className={btn}>EMD source (page {emdReq.source_page})</button>}
+                        {feeReq && <button onClick={() => showSource(feeReq)} className={btn}>Fee source (page {feeReq.source_page})</button>}
+                        {psReq && <button onClick={() => showSource(psReq)} className={btn}>Security source (page {psReq.source_page})</button>}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {tab === "queries" && (
+                  <div>
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <p className="text-[#59636e]">
+                        Draft questions for the tender authority. Replace [Company name] before sending.
+                      </p>
+                      {queries.length > 0 && (
+                        <button onClick={() => copyText("all", queries.map((q) => q.text).join("\n\n----------\n\n"))} className={btn}>
+                          {copied === "all" ? "Copied" : "Copy all"}
+                        </button>
+                      )}
+                    </div>
+                    {queries.length === 0 && (
+                      <Box><div className="px-4 py-8 text-center text-[#59636e]">Nothing unclear was flagged in this tender.</div></Box>
+                    )}
+                    <div className="space-y-3">
+                      {queries.map((q) => (
+                        <Box
+                          key={q.id}
+                          title={q.kind}
+                          right={<span className="text-xs text-[#59636e]">Page {q.page}</span>}
+                        >
+                          <pre className="whitespace-pre-wrap text-xs font-mono p-4 text-[#1f2328]">{q.text}</pre>
+                          <div className="flex gap-2 px-4 pb-4">
+                            <button onClick={() => copyText(q.id, q.text)} className={btnSm}>{copied === q.id ? "Copied" : "Copy"}</button>
+                            <button onClick={() => showSource(reqs.find((x) => x.id === q.id))} className={btnSm}>View in PDF</button>
+                          </div>
+                        </Box>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              <aside className="min-w-0 space-y-5">
+                <div>
+                  <h2 className="text-base font-semibold mb-2">About</h2>
+                  <Row k="Estimated cost" v={data.estimated_cost ? inr(data.estimated_cost) : "N/A"} />
+                  <Row k="Bid deadline" v={data.bid_deadline ? data.bid_deadline.replace("T", " ").slice(0, 16) : "N/A"} />
+                  <Row k="Time left" v={leftLabel} />
+                  <Row k="Requirements" v={reqs.length} />
+                  <Row k="Mandatory" v={mandatory} />
+                  <Row k="With exemptions" v={withEx} />
+                  <Row k="Needs review" v={ambiguous} />
+                </div>
+
+                <div className="border-t border-[#d0d7de] pt-4">
+                  <h2 className="text-base font-semibold">Documents you hold</h2>
+                  <p className="text-xs text-[#59636e] mt-0.5">{ready} of {docs.length} ready. Feeds the Can I bid? check.</p>
+                  {docs.length === 0 && <p className="text-[#59636e] mt-3">No specific documents were listed.</p>}
+                  <ul className="mt-3 space-y-2.5">
+                    {docs.map((d) => (
+                      <li key={d.name}>
+                        <label className="flex items-start gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!done[d.name]}
+                            onChange={() => setDone({ ...done, [d.name]: !done[d.name] })}
+                            className="mt-1 h-4 w-4 accent-[#1f883d]"
+                          />
+                          <span className={done[d.name] ? "line-through text-[#59636e]" : ""}>
+                            <span className="block">{d.name}</span>
+                            <span className="block text-xs text-[#59636e]">{d.note}</span>
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </aside>
+            </div>
+          </div>
+        )}
       </main>
+
+      <footer className="print:hidden border-t border-[#d0d7de] mt-10">
+        <div className="max-w-[1216px] mx-auto px-4 md:px-6 py-6 text-xs text-[#59636e] flex flex-wrap gap-x-6 gap-y-1">
+          <span>BidReady</span>
+          <span>Indicative analysis only. Verify every figure against the original tender document.</span>
+        </div>
+      </footer>
 
       {phase === "done" && data && (
         <div className="hidden print:block bg-white text-black p-8 text-sm">
@@ -732,89 +903,29 @@ export default function App() {
               <li key={r.id} className="mt-1">[{cat(r.category)[0]}] {r.description}{threshold(r) ? " - " + threshold(r) : ""} (page {r.source_page})</li>
             ))}
           </ol>
-          <p className="mt-6 text-xs">Generated by BidReady AI. Indicative only - verify every figure against the original tender document.</p>
+          <p className="mt-6 text-xs">Generated by BidReady. Indicative only - verify every figure against the original tender document.</p>
         </div>
       )}
 
       {viewer && (
-        <div className="print:hidden fixed top-0 right-0 h-full w-full md:w-[560px] z-30 bg-[#0d1117] border-l border-[#30363d] flex flex-col shadow-2xl">
-          <div className="flex items-center justify-between px-4 py-3 bg-[#161b22] border-b border-[#30363d]">
+        <div className="print:hidden fixed top-0 right-0 h-full w-full md:w-[560px] z-30 bg-white border-l border-[#d0d7de] flex flex-col shadow-xl">
+          <div className="flex items-center justify-between px-4 py-3 bg-[#f6f8fa] border-b border-[#d0d7de]">
             <div>
-              <p className="text-sm font-semibold">Source document</p>
-              <p className="text-xs text-[#8b949e]">Page {viewer.page}</p>
+              <p className="font-semibold">Source document</p>
+              <p className="text-xs text-[#59636e]">Page {viewer.page}</p>
             </div>
-            <button onClick={() => setViewer(null)} className={btnGrey}>Close</button>
+            <button onClick={() => setViewer(null)} className={btn}>Close</button>
           </div>
           {viewer.quote && (
-            <p className="text-xs text-[#8b949e] border-b border-[#30363d] px-4 py-3">Quote: "{viewer.quote}"</p>
+            <p className="text-xs text-[#59636e] border-b border-[#d0d7de] px-4 py-3">Quote: "{viewer.quote}"</p>
           )}
           {pdfUrl ? (
             <iframe key={viewer.key} title="Tender PDF" src={pdfUrl + "#page=" + viewer.page} className="flex-1 w-full bg-white" />
           ) : (
-            <div className="flex-1 p-6 text-sm text-[#8b949e]">The original PDF is not stored for saved results. Re-upload the tender to view page {viewer.page}.</div>
+            <div className="flex-1 p-6 text-[#59636e]">The original PDF is not stored for saved results. Upload the tender again to view page {viewer.page}.</div>
           )}
         </div>
       )}
     </div>
-  );
-}
-
-function Row({ k, v }) {
-  return (
-    <div className="flex justify-between text-sm py-1.5 border-b border-[#30363d] last:border-b-0">
-      <span className="text-[#8b949e]">{k}</span>
-      <span className="font-medium">{v}</span>
-    </div>
-  );
-}
-
-function Row2({ k, v, note }) {
-  return (
-    <div className="px-4 py-3 border-b border-[#30363d] last:border-b-0 flex items-start justify-between gap-3">
-      <div>
-        <p className="text-sm">{k}</p>
-        {note && <p className="text-xs text-[#3fb950] mt-0.5">{note}</p>}
-      </div>
-      <p className="text-sm font-semibold text-[#58a6ff] text-right">{v}</p>
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <label className="block">
-      <span className="block text-xs text-[#8b949e] mb-1">{label}</span>
-      {children}
-    </label>
-  );
-}
-
-function Count({ n }) {
-  return <span className="ml-1 text-xs bg-[#30363d] rounded-full px-1.5 py-0.5">{n}</span>;
-}
-
-function Tag({ color, children }) {
-  return <span className={"inline-block mr-2 text-xs border rounded-full px-2 py-0.5 " + color}>{children}</span>;
-}
-
-function Tab({ active, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className={"text-sm px-3 py-1 rounded-md border transition " + (active ? "bg-[#1f6feb] border-[#1f6feb] text-white font-medium" : "bg-[#21262d] border-[#30363d] text-[#e6edf3] hover:bg-[#30363d]")}
-    >
-      {children}
-    </button>
-  );
-}
-
-function TabBtn({ active, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className={"px-4 py-2 text-sm border-b-2 -mb-px transition " + (active ? "border-[#f78166] text-[#e6edf3] font-semibold" : "border-transparent text-[#8b949e] hover:text-[#e6edf3]")}
-    >
-      {children}
-    </button>
   );
 }
