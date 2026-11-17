@@ -1,5 +1,13 @@
 # BidReady AI
 
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Hackathon_prototype-orange)
+
+
 **From tender PDF to a clearer bidding decision.**
 
 BidReady AI is a hackathon project that helps teams turn lengthy tender documents into structured, reviewable information. It combines a React dashboard with a FastAPI backend for PDF processing and requirement extraction.
